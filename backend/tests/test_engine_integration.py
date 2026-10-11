@@ -9,7 +9,7 @@ import chess
 import chess.engine
 import pytest
 
-from backend.engine.stockfish_manager import StockfishManager
+from backend.engine.stockfish_manager import EngineUnavailable, StockfishManager
 
 ENGINE = os.environ.get("CHESSLAB_ENGINE_PATH", "/usr/bin/stockfish")
 pytestmark = pytest.mark.skipif(
@@ -75,3 +75,26 @@ def test_mate_score_normalization(manager):
     score = result["lines"][0]["score"]
     assert score["type"] == "mate"
     assert score["mate"] > 0  # White delivers mate
+
+
+def test_recovers_after_engine_crash(manager, monkeypatch):
+    """A dead engine must not permanently break the manager (spec non-negotiable)."""
+    assert manager.analyse_multi(chess.Board(), chess.engine.Limit(depth=6))["lines"]
+
+    def boom(*_args, **_kwargs):
+        raise chess.engine.EngineTerminatedError("simulated crash")
+
+    monkeypatch.setattr(manager._engine, "analysis", boom)
+    stale = manager._engine
+    with pytest.raises(EngineUnavailable):
+        manager.analyse_multi(chess.Board(), chess.engine.Limit(depth=6))
+    assert manager._meta["available"] is False
+    assert manager._engine is None
+    stale.quit()  # the simulated crash bypasses the real context manager
+
+    # The next call must transparently relaunch Stockfish and analyse again.
+    monkeypatch.undo()
+    result = manager.analyse_multi(chess.Board(), chess.engine.Limit(depth=8))
+    assert result["lines"]
+    assert manager._meta["available"] is True
+
