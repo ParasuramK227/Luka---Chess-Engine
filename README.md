@@ -145,7 +145,7 @@ data/
 ## Testing
 
 ```bash
-# Backend: 49 tests — unit tests use a deterministic fake UCI engine;
+# Backend: 50 tests — unit tests use a deterministic fake UCI engine;
 #          the integration suite verifies a real Stockfish 19 end-to-end.
 ./backend/.venv/bin/python -m pytest backend/tests -q
 
