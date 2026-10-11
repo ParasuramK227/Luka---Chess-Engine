@@ -54,7 +54,7 @@ beforeEach(() => {
 describe("App smoke", () => {
   it("renders header, engine badge and tabs", async () => {
     render(<App />);
-    expect(screen.getByText("ChessLab")).toBeInTheDocument();
+    expect(screen.getByText("Luka - Chess Engine")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("Board")).toBeInTheDocument());
     expect(screen.getByText("Review")).toBeInTheDocument();
     expect(screen.getByText("Library")).toBeInTheDocument();

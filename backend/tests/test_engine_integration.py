@@ -11,7 +11,7 @@ import pytest
 
 from backend.engine.stockfish_manager import EngineUnavailable, StockfishManager
 
-ENGINE = os.environ.get("CHESSLAB_ENGINE_PATH", "/usr/bin/stockfish")
+ENGINE = os.environ.get("LUKA_ENGINE_PATH", "/usr/bin/stockfish")
 pytestmark = pytest.mark.skipif(
     not os.path.exists(ENGINE), reason="Stockfish not installed"
 )

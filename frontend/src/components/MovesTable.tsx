@@ -49,7 +49,7 @@ export function MovesTable({
                     title={cell.title}
                     className={clsx(
                       "cursor-pointer rounded px-2 py-0.5 tabular-nums hover:bg-stone-800",
-                      selectedPly === cell.ply ? "bg-emerald-700/70 text-white" : "text-stone-200",
+                      selectedPly === cell.ply ? "bg-violet-700/70 text-white" : "text-stone-200",
                     )}
                   >
                     <span className="inline-flex items-baseline gap-1.5">

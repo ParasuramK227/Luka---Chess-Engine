@@ -1,4 +1,4 @@
-"""ChessLab Flask application and versioned REST API.
+"""Luka - Chess Engine Flask application and versioned REST API.
 
 Bind is 127.0.0.1 by default. All chess analysis runs locally through the
 Stockfish binary configured in settings. The only outbound network access is the
@@ -30,7 +30,7 @@ from .online_import import (
 from .storage.pgn_service import PgnError, games_to_pgn, parse_pgn, validate_fen
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-logger = logging.getLogger("chesslab.api")
+logger = logging.getLogger("luka.api")
 
 api = Blueprint("api", __name__, url_prefix="/api/v1")
 
@@ -725,8 +725,8 @@ app = create_app()
 if __name__ == "__main__":
     import os
 
-    host = os.environ.get("CHESSLAB_HOST", "127.0.0.1")
-    port = int(os.environ.get("CHESSLAB_PORT", "5001"))
+    host = os.environ.get("LUKA_HOST", "127.0.0.1")
+    port = int(os.environ.get("LUKA_PORT", "5001"))
     ctx = get_ctx()
     status = ctx.ensure_engine()
     if status.get("available"):

@@ -163,7 +163,7 @@ export function LiveAnalysis({
 function AnalysisLineView({ line, rank }: { line: EvalLine; rank: number }) {
   const pv = line.pv_san?.slice(0, 8) ?? [];
   return (
-    <div className={clsx("rounded border px-2 py-1.5 text-xs", rank === 1 ? "border-emerald-800/70 bg-emerald-950/30" : "border-stone-800 bg-stone-900/50")}>
+    <div className={clsx("rounded border px-2 py-1.5 text-xs", rank === 1 ? "border-violet-800/70 bg-violet-950/30" : "border-stone-800 bg-stone-900/50")}>
       <div className="flex items-center justify-between gap-2">
         <span className="font-mono font-semibold text-stone-200">{formatEval(line.score)}</span>
         <span className="text-stone-500">

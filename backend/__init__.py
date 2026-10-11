@@ -1,1 +1,1 @@
-"""ChessLab backend package."""
+"""Luka - Chess Engine backend package."""

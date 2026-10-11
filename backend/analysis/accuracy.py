@@ -1,6 +1,6 @@
 """Accuracy and centipawn-loss calculations.
 
-These are ChessLab's own documented metrics. They are **not** Chess.com's or
+These are Luka - Chess Engine's own documented metrics. They are **not** Chess.com's or
 Lichess's algorithms, and we do not claim parity with either service.
 
 Model summary

@@ -103,7 +103,7 @@ class FileManager:
             raise FileError(f"Refusing to overwrite existing file: {target.name}")
         target.parent.mkdir(parents=True, exist_ok=True)
         # Atomic write via temp file in the same directory.
-        fd, tmp = tempfile.mkstemp(dir=str(target.parent), prefix=".chesslab-", suffix=".tmp")
+        fd, tmp = tempfile.mkstemp(dir=str(target.parent), prefix=".luka-", suffix=".tmp")
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as fh:
                 fh.write(text)
@@ -118,7 +118,7 @@ class FileManager:
         if target.exists() and not overwrite:
             raise FileError(f"Refusing to overwrite existing file: {target.name}")
         target.parent.mkdir(parents=True, exist_ok=True)
-        fd, tmp = tempfile.mkstemp(dir=str(target.parent), prefix=".chesslab-", suffix=".tmp")
+        fd, tmp = tempfile.mkstemp(dir=str(target.parent), prefix=".luka-", suffix=".tmp")
         try:
             with os.fdopen(fd, "wb") as fh:
                 fh.write(data)

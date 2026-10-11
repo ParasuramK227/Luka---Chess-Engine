@@ -126,7 +126,7 @@ def review_to_html(review: dict) -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ChessLab report — {esc(headers.get('White','?'))} vs {esc(headers.get('Black','?'))}</title>
+<title>Luka - Chess Engine report — {esc(headers.get('White','?'))} vs {esc(headers.get('Black','?'))}</title>
 <style>
   :root {{ --bg:#f5f6f7; --panel:#1f2429; --line:#d6dade; --accent:#5aa469; }}
   * {{ box-sizing: border-box; }}

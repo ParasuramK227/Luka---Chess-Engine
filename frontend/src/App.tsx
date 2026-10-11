@@ -32,9 +32,13 @@ function Shell() {
       <header className="border-b border-stone-800 bg-stone-950/80 backdrop-blur">
         <div className="flex max-w-7xl items-center gap-4 px-4 py-3">
           <div className="flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded bg-emerald-700 text-sm font-black text-white">♞</span>
+            <span className="grid h-8 w-8 place-items-center rounded bg-violet-700 text-white">
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
+                <path d="M8 3.5 13.5 12.5H2.5L8 3.5Z" />
+              </svg>
+            </span>
             <div>
-              <h1 className="text-base font-bold leading-none text-stone-100">ChessLab</h1>
+              <h1 className="text-base font-bold leading-none text-stone-100">Luka - Chess Engine</h1>
               <p className="mt-0.5 text-[10px] leading-none text-stone-500">local stockfish · offline analysis</p>
             </div>
           </div>
@@ -45,7 +49,7 @@ function Shell() {
                 onClick={() => setTab(t.id)}
                 className={clsx(
                   "whitespace-nowrap rounded px-3 py-1.5 text-sm font-medium transition-colors",
-                  tab === t.id ? "bg-stone-800 text-emerald-300" : "text-stone-400 hover:text-stone-200",
+                  tab === t.id ? "bg-stone-800 text-violet-300" : "text-stone-400 hover:text-stone-200",
                 )}
               >
                 {t.label}
@@ -65,7 +69,7 @@ function Shell() {
       </main>
 
       <footer className="border-t border-stone-800 py-3 text-center text-[11px] text-stone-600">
-        ChessLab · analysis runs locally · offline by default · no accounts · no telemetry · optional online game import · engine: Stockfish via UCI on 127.0.0.1:5001
+        Luka - Chess Engine · analysis runs locally · offline by default · no accounts · no telemetry · optional online game import · engine: Stockfish via UCI on 127.0.0.1:5001
       </footer>
       <Toasts />
     </div>

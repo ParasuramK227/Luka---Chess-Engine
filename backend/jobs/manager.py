@@ -79,7 +79,7 @@ class Job:
 
 class JobManager:
     def __init__(self, max_workers: int = 2):
-        self._executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="chesslab-job")
+        self._executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="luka-job")
         self._jobs: dict[str, Job] = {}
         self._order: list[str] = []
         self._lock = threading.Lock()

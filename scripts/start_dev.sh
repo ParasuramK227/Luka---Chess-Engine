@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ChessLab development launcher.
+# Luka - Chess Engine development launcher.
 #
 # Starts the local Flask backend (127.0.0.1:5001) and the Vite dev server
 # (http://localhost:5173) with an /api proxy to the backend.

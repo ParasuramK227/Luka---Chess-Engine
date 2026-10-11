@@ -1,4 +1,4 @@
-// Types mirroring the ChessLab backend API payloads.
+// Types mirroring the Luka - Chess Engine backend API payloads.
 
 export interface EngineScore {
   type: "cp" | "mate" | null;

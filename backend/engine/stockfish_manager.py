@@ -15,7 +15,7 @@ from typing import Any, Callable
 import chess
 import chess.engine
 
-logger = logging.getLogger("chesslab.engine")
+logger = logging.getLogger("luka.engine")
 
 
 class EngineUnavailable(RuntimeError):

@@ -1,6 +1,6 @@
 """Optional, opt-in online game importer for chess.com and lichess.
 
-This is the *only* place in ChessLab that performs outbound network access, and
+This is the *only* place in Luka - Chess Engine that performs outbound network access, and
 it is disabled by default (see ``settings.online_import.enabled``). It only
 reads public game data for a username the user explicitly supplies; nothing is
 uploaded and no account or token is used.
@@ -18,7 +18,7 @@ import urllib.parse
 import urllib.request
 
 # chess.com requires a descriptive User-Agent; lichess is happy with one too.
-USER_AGENT = "ChessLab/0.1 (local chess analysis)"
+USER_AGENT = "Luka-Chess-Engine/0.1 (local chess analysis)"
 MAX_BYTES = 5 * 1024 * 1024
 USERNAME_RE = re.compile(r"^[A-Za-z0-9_\-]{1,40}$")
 

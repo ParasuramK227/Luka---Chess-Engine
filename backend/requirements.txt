@@ -1,4 +1,4 @@
-# ChessLab backend dependencies
+# Luka - Chess Engine backend dependencies
 
 # Python chess library by Niklas Fiekas (import name: `chess`).
 # Pinned to the pure-Python release so no native build is required and the

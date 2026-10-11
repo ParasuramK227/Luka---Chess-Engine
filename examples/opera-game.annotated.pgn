@@ -6,6 +6,6 @@
 [Black "Duke Karl / Count Isouard"]
 [Result "1-0"]
 [ECO "C41"]
-[Annotator "ChessLab"]
+[Annotator "Luka - Chess Engine"]
 
 1. e4 {Book.} e5 {Book.} 2. Nf3 {Book.} d6 {Book.} 3. d4 {Book. 2 cp loss.} Bg4 $6 {Inaccuracy. 90 cp loss. best was exd4.} 4. dxe5 $1 {Best move. 22 cp loss.} Bxf3 {Good. 37 cp loss. best was Nc6.} 5. Qxf3 $1 {Best move.} dxe5 $1 {Excellent. 8 cp loss. best was Nd7.} 6. Bc4 {Good. 42 cp loss. best was Qb3.} Nf6 $2 {Mistake. 102 cp loss. best was Qf6.} 7. Qb3 $1 {Best move.} Qe7 $6 {Inaccuracy. 67 cp loss. best was Bc5.} 8. Nc3 $2 {Mistake. 199 cp loss. best was Qxb7.} c6 $1 {Best move. 79 cp loss.} 9. Bg5 {Good. 21 cp loss. best was Be3.} b5 $2 {Mistake. 113 cp loss. best was a6.} 10. Nxb5 $1 {Best move.} cxb5 $1 {Best move. 59 cp loss.} 11. Bxb5+ $1 {Best move. 19 cp loss.} Nbd7 $1 {Best move. 43 cp loss.} 12. O-O-O $1 {Best move.} Rd8 $1 {Best move.} 13. Rxd7 $1 {Great move. 4 cp loss. best was Rxd7.} Rxd7 $1 {Best move. 53 cp loss.} 14. Rd1 $1 {Great move. 27 cp loss. best was Rd1.} Qe6 $2 {Mistake. 143 cp loss. best was g6.} 15. Bxd7+ $4 {Blunder. 536 cp loss. best was Bxf6.} Nxd7 $1 {Great move. 9745 cp loss. best was Nxd7.} 16. Qb8+ $3 {Brilliant. best was Qb8+.} Nxb8 {Forced move.} 17. Rd8# $1 {Great move. best was Rd8#.} 1-0

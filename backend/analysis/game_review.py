@@ -303,7 +303,7 @@ def run_review(
             "accuracy_method": {
                 "model": "winprob",
                 "formula": "accuracy = 100 * (1 - delta_winprob) ** 1.5; game accuracy = mean of per-move accuracy",
-                "note": "ChessLab estimate, not an official Chess.com or Lichess score.",
+                "note": "Luka - Chess Engine estimate, not an official Chess.com or Lichess score.",
                 "cp_to_wp": "wp = 1 / (1 + exp(-0.00368208 * cp))",
             },
             "depth": depth,

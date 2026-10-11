@@ -1,7 +1,7 @@
-"""ChessLab configuration: validated, file-backed settings.
+"""Luka - Chess Engine configuration: validated, file-backed settings.
 
 Settings live in ``<project>/data/settings.json`` by default. The data directory
-itself is configurable through the ``CHESSLAB_DATA_DIR`` environment variable or
+itself is configurable through the ``LUKA_DATA_DIR`` environment variable or
 by editing the settings file. Nothing here performs network access.
 """
 
@@ -22,13 +22,13 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 def _default_data_dir() -> Path:
-    env = os.environ.get("CHESSLAB_DATA_DIR")
+    env = os.environ.get("LUKA_DATA_DIR")
     if env:
         return Path(env).expanduser().resolve()
     return (PROJECT_ROOT / "data").resolve()
 
 
-DEFAULT_ENGINE_PATH = os.environ.get("CHESSLAB_ENGINE_PATH", "/usr/bin/stockfish")
+DEFAULT_ENGINE_PATH = os.environ.get("LUKA_ENGINE_PATH", "/usr/bin/stockfish")
 
 # ---------------------------------------------------------------------------
 # Defaults

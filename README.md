@@ -1,4 +1,4 @@
-# ChessLab
+# Luka - Chess Engine
 
 A **local chess analysis workbench** that runs fully offline by default. Play,
 analyze, and get a game review with the real Stockfish engine — no accounts,
@@ -165,7 +165,7 @@ cd frontend && npm test
 
 ## Known limitations
 
-- **Accuracy parity** — ChessLab does not claim percentage-identical results to
+- **Accuracy parity** — Luka - Chess Engine does not claim percentage-identical results to
   Chess.com/Lichess; the model is documented, deterministic, and reproducible.
 - **Opening stats** — no win rates/popularity: those need a statistical game
   database which is not bundled (add `data/openings.json` to extend names/ECO
@@ -184,7 +184,7 @@ cd frontend && npm test
   APIs (lichess.org, api.chess.com) to be reachable: username not found,
   rate-limits, or outages surface as clear error messages, and the rest of the
   app keeps working offline. Imported games are the ones the sites return
-  (most recent public games); ChessLab forwards them as-is minus non-standard
+  (most recent public games); Luka - Chess Engine forwards them as-is minus non-standard
   variants.
 
 ## Repository layout

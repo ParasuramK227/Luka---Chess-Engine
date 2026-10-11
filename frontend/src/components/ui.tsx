@@ -7,7 +7,7 @@ export function clsx(...parts: Array<string | false | null | undefined>): string
 type BtnVariant = "primary" | "ghost" | "danger" | "subtle" | "outline";
 
 const btnStyles: Record<BtnVariant, string> = {
-  primary: "bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm",
+  primary: "bg-violet-600 hover:bg-violet-500 text-white shadow-sm",
   ghost: "bg-transparent hover:bg-stone-800 text-stone-200",
   danger: "bg-red-700 hover:bg-red-600 text-white",
   subtle: "bg-stone-800 hover:bg-stone-700 text-stone-200",
@@ -48,7 +48,7 @@ export function Input({ className, ...rest }: InputHTMLAttributes<HTMLInputEleme
     <input
       {...rest}
       className={clsx(
-        "w-full rounded border border-stone-700 bg-stone-900 px-2.5 py-1.5 text-sm text-stone-100 outline-none focus:border-emerald-500",
+        "w-full rounded border border-stone-700 bg-stone-900 px-2.5 py-1.5 text-sm text-stone-100 outline-none focus:border-violet-500",
         className,
       )}
     />
@@ -60,7 +60,7 @@ export function Select({ className, children, ...rest }: SelectHTMLAttributes<HT
     <select
       {...rest}
       className={clsx(
-        "w-full rounded border border-stone-700 bg-stone-900 px-2 py-1.5 text-sm text-stone-100 outline-none focus:border-emerald-500",
+        "w-full rounded border border-stone-700 bg-stone-900 px-2 py-1.5 text-sm text-stone-100 outline-none focus:border-violet-500",
         className,
       )}
     >
@@ -75,7 +75,7 @@ export function NumberInput({ className, ...rest }: InputHTMLAttributes<HTMLInpu
       type="number"
       {...rest}
       className={clsx(
-        "rounded border border-stone-700 bg-stone-900 px-2 py-1.5 text-sm text-stone-100 outline-none focus:border-emerald-500",
+        "rounded border border-stone-700 bg-stone-900 px-2 py-1.5 text-sm text-stone-100 outline-none focus:border-violet-500",
         className,
       )}
     />
@@ -94,7 +94,7 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
       <span
         className={clsx(
           "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors",
-          checked ? "bg-emerald-600" : "bg-stone-700",
+          checked ? "bg-violet-600" : "bg-stone-700",
         )}
       >
         <span
@@ -113,7 +113,7 @@ export function Spinner({ className }: { className?: string }) {
   return (
     <span
       className={clsx(
-        "inline-block h-4 w-4 animate-spin rounded-full border-2 border-stone-500 border-t-emerald-400",
+        "inline-block h-4 w-4 animate-spin rounded-full border-2 border-stone-500 border-t-violet-400",
         className,
       )}
     />
@@ -124,7 +124,7 @@ export function ProgressBar({ value, className }: { value: number; className?: s
   return (
     <div className={clsx("h-1.5 w-full overflow-hidden rounded-full bg-stone-800", className)}>
       <div
-        className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+        className="h-full rounded-full bg-violet-500 transition-all duration-300"
         style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
       />
     </div>

@@ -263,7 +263,7 @@ export function LibraryView() {
             </Button>
             <p className="w-full text-[11px] text-stone-500">
               Fetches the most recent public games from {onlineSite} and opens the newest one to review. This is the
-              only ChessLab feature that uses the internet, and it only runs when you click the button.
+              only Luka - Chess Engine feature that uses the internet, and it only runs when you click the button.
             </p>
           </div>
         ) : (
@@ -285,7 +285,7 @@ export function LibraryView() {
           <div className="flex items-center gap-2">
             <Input className="w-48 py-1 text-xs" placeholder="Search names / event…" value={query} onChange={(e) => setQuery(e.target.value)} />
             <select
-              className="rounded border border-stone-700 bg-stone-900 px-2 py-1.5 text-xs text-stone-100 outline-none focus:border-emerald-500"
+              className="rounded border border-stone-700 bg-stone-900 px-2 py-1.5 text-xs text-stone-100 outline-none focus:border-violet-500"
               value={collection}
               onChange={(e) => setCollection(e.target.value)}
             >
@@ -316,7 +316,7 @@ export function LibraryView() {
                     </span>
                   ) : null}
                   {g.analysis?.status === "complete" ? (
-                    <Badge className="bg-emerald-800">
+                    <Badge className="bg-violet-800">
                       W {formatPct(g.analysis.accuracy?.white)} · B {formatPct(g.analysis.accuracy?.black)}
                     </Badge>
                   ) : (

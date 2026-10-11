@@ -283,7 +283,7 @@ export function ReviewView() {
         <Card title="Choose a game">
           <EmptyState
             title="No games in the library yet"
-            body={<>Import a PGN from the Library tab, or switch to <button className="underline text-emerald-400" onClick={() => setSrcMode("pgn")}>Paste PGN</button> to review without saving.</>}
+            body={<>Import a PGN from the Library tab, or switch to <button className="underline text-violet-400" onClick={() => setSrcMode("pgn")}>Paste PGN</button> to review without saving.</>}
           />
         </Card>
       </div>
@@ -324,7 +324,7 @@ export function ReviewView() {
           <div className="space-y-2">
             <Field label="PGN" hint="Paste one or more games, then Parse to preview on the board.">
               <textarea
-                className="h-32 w-full rounded border border-stone-700 bg-stone-900 px-2.5 py-1.5 font-mono text-xs text-stone-100 outline-none focus:border-emerald-500"
+                className="h-32 w-full rounded border border-stone-700 bg-stone-900 px-2.5 py-1.5 font-mono text-xs text-stone-100 outline-none focus:border-violet-500"
                 value={pgnText}
                 onChange={(e) => setPgnText(e.target.value)}
                 placeholder={'[Event "Example"]\n[White "Alice"]\n[Black "Bob"]\n\n1. e4 e5 2. Nf3 Nc6 *'}
@@ -408,7 +408,7 @@ export function ReviewView() {
                     </div>
                     {summary?.opening ? (
                       <div className="rounded bg-stone-800/70 px-2 py-1.5 text-xs text-stone-300">
-                        <span className="font-semibold text-emerald-400">{summary.opening.name}</span>
+                        <span className="font-semibold text-violet-400">{summary.opening.name}</span>
                         <span className="text-stone-500"> · {summary.opening.eco}</span>
                       </div>
                     ) : null}

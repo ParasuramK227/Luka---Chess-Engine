@@ -32,7 +32,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
     });
   } catch {
-    throw new ApiError("Cannot reach the local ChessLab backend. Is it running?", 0, "network");
+    throw new ApiError("Cannot reach the local Luka - Chess Engine backend. Is it running?", 0, "network");
   }
   if (!res.ok) {
     let message = `HTTP ${res.status}`;
@@ -215,7 +215,7 @@ export async function downloadReport(id: string, fmt: "html" | "pgn" | "json" | 
   try {
     res = await fetch(url);
   } catch {
-    throw new ApiError("Cannot reach the local ChessLab backend.", 0, "network");
+    throw new ApiError("Cannot reach the local Luka - Chess Engine backend.", 0, "network");
   }
   if (!res.ok) throw new ApiError(`Download failed: HTTP ${res.status}`, res.status);
   const content = await res.text();

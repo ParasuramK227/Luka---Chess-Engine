@@ -217,7 +217,7 @@ def game_to_annotated_pgn(game: dict, annotations: list[dict] | None = None) -> 
     """
     annotations = annotations or []
     headers = dict(game.get("headers") or {})
-    headers.setdefault("Annotator", "ChessLab")
+    headers.setdefault("Annotator", "Luka - Chess Engine")
     headers.setdefault("Result", game.get("result", "*"))
 
     lines = [f'[{key} "{_escape_header(value)}"]' for key, value in headers.items()]
