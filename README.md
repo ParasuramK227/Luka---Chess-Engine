@@ -19,6 +19,16 @@ disabled-by-default game importer for chess.com / lichess usernames.
 - **Board** — play/edit positions (drag-and-drop, click-to-move, promotion
   dialog), FEN import/export, history navigation, coordinates, legal-move
   dots, board flip.
+- **Move badges (auto-analysis)** — after every move, the top-right square of
+  the moved piece gets a badge showing the move's type (see the badge legend
+  below). Classification comes from the real engine — centipawn loss against
+  the engine's best move at `live_depth` (default 18) — analyzed per move as
+  you play; auto-analyze can be toggled and its depth changed in Settings →
+  Board.
+- **Live stats column** — the Board tab shows a side column with per-player
+  accuracy, average loss, and an estimated rating band (≈, Luka's own
+  documented model), plus the classification tally as you play. The Review tab
+  shows the same column for the finished review.
 - **Engine analysis** — one managed Stockfish process; depth or move-time/node
   limits; **MultiPV** (1–6 lines); live lines streamed over **SSE** with a
   polling fallback; WDL win/draw/loss percentages via `UCI_ShowWDL`; best-move
@@ -50,8 +60,8 @@ disabled-by-default game importer for chess.com / lichess usernames.
 - **Reports & exports** — annotated PGN (comments + NAGs), HTML report, CSV of
   per-move metrics, JSON review dump. Written under `data/reports/`.
 - **Settings** — engine threads/hash/path/MultiPV/WDL, review depth & caps,
-  classification thresholds, board prefs, eval-cache clearing — all persisted
-  in `data/settings.json`.
+  classification thresholds, auto-analysis (on/off + live depth), board prefs,
+  eval-cache clearing — all persisted in `data/settings.json`.
 
 ## Accuracy model (documented caveat)
 
@@ -68,6 +78,28 @@ accuracy  = 100 · (1 - Δwp)^1.5
   Lichess accuracy numbers. It is documented in the Settings tab.
 - A forced mate *missed* in the game can still yield a mid-30s accuracy —
   this follows directly from the documented formula.
+
+## Move badges (legend)
+
+Each analyzed move gets a badge on the moved piece's square (Board tab while
+playing, Review tab per position). The classification bands use the loss in
+centipawns vs. the engine's best move at the analysis depth (thresholds are
+configurable in Settings → Classification):
+
+| Badge | Meaning | Band (cp loss) |
+|---|---|---|
+| 📘 Book (brown) | Part of the bundled opening dataset | – |
+| 🟢 Star (green) — *Good* | Small or no loss | ≤ good_loss |
+| 🟢 Diamond (green) — *Best / Excellent / Great* | Played the engine's move (or equivalent) | ≈ 0 |
+| 💎 Diamond (cyan) — *Brilliant* | Excellent move in a sharp position | – |
+| ⬛ Rectangle (black) — *Forced* | Only legal move; no alternative | – |
+| 🟠 `?!` — *Inaccuracy* | Noticeable edge given up | ≤ inaccuracy_loss |
+| 🟡 `?!` — *Mistake* | Clear error | ≤ mistake_loss |
+| 🔴 `??` — *Blunder* | Decisive error (also *missed win*, shown as Mistake) | > mistake_loss |
+
+The estimate shown next to accuracy is Luka's **own** piecewise-linear rating
+approximation (documented in `backend/analysis/accuracy.py`); it is labeled
+`≈ est.` and is not a claim of parity with any chess site's rating estimate.
 
 ## Architecture
 
@@ -139,7 +171,8 @@ data/
 
 - `GET /health`, `GET /engine/status`, `POST /engine/restart`, `POST /engine/configure`
 - `POST /fen/validate`, `POST /legal-moves`
-- `POST /jobs/analyze` · `POST /jobs/review` · `GET /jobs/<id>` ·
+- `POST /jobs/analyze` · `POST /jobs/analyze_move` (per-move classification for
+  auto-analysis) · `POST /jobs/review` · `GET /jobs/<id>` ·
   `GET /jobs/<id>/result` · `POST /jobs/<id>/cancel` ·
   `GET /jobs/<id>/events` (SSE) · `GET /jobs`
 - `POST /pgn/parse`, `POST /pgn/export`
@@ -153,12 +186,14 @@ data/
 ## Testing
 
 ```bash
-# Backend: 63 tests — unit tests use a deterministic fake UCI engine;
+# Backend: 72 tests — unit tests use a deterministic fake UCI engine;
 #          the integration suite verifies a real Stockfish 19 end-to-end.
 ./backend/.venv/bin/python -m pytest backend/tests -q
 
-# Frontend: 29 tests (Vitest + Testing Library) — format helpers, board state,
-#           move table, online-import flow, and full-App smoke rendering
+# Frontend: 43 tests (Vitest + Testing Library) — format helpers (badges,
+#           rating estimate), board state, move table, useJob stale-result
+#           regression, review-flow regression (import → auto-review renders),
+#           ErrorBoundary, online-import flow, and full-App smoke rendering
 #           against a mocked API.
 cd frontend && npm test
 ```

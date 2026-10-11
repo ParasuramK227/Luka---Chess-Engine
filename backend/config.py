@@ -75,6 +75,9 @@ DEFAULT_SETTINGS: dict[str, Any] = {
         "show_legal_moves": True,
         "sound": False,
         "arrow_best_move": True,
+        # Live board behaviour.
+        "auto_analyze": True,  # run analysis automatically after each move
+        "live_depth": 18,      # depth used for automatic per-move analysis
     },
     "online_import": {
         # Optional feature; the only code path that touches the network.
@@ -166,6 +169,16 @@ def validate_settings(raw: dict) -> dict:
     except (TypeError, ValueError):
         online["timeout_s"] = 15
     settings["online_import"] = online
+
+    board = settings["board"]
+    if not isinstance(board, dict):
+        board = dict(DEFAULT_SETTINGS["board"])
+    board["auto_analyze"] = bool(board.get("auto_analyze", True))
+    try:
+        board["live_depth"] = max(4, min(28, int(board.get("live_depth", 18))))
+    except (TypeError, ValueError):
+        board["live_depth"] = 18
+    settings["board"] = board
 
     return settings
 

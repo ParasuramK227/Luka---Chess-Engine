@@ -1,3 +1,5 @@
+import { BookOpen, Diamond, Gem, Square, Star } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { EngineScore, ReviewMove } from "../api/types";
 
 /** Convert a score to a signed white-POV centipawn value (mate → very large). */
@@ -60,6 +62,142 @@ const CATS: Record<string, CatMeta> = {
 
 export function catMeta(category: string): CatMeta {
   return CATS[category] ?? { label: category, cls: "", nag: null };
+}
+
+/* ---------------------------------------------------------------------------
+ * Move-quality badges & merged buckets
+ *
+ * Badge appearance follows the design picked for the app:
+ *   book=brown book · good=green star · brilliant=cyan diamond · best=green
+ *   diamond · inaccuracy=orange "?!" · mistake=yellow "?!" · blunder=red "??"
+ *   · forced=black rectangle
+ * The backend still emits the full category set; ``excellent`` and ``great``
+ * display as Best (green diamond) and ``missed_win`` as Mistake (yellow "?!"),
+ * and the merged tally uses those aliases so counts stay coherent.
+ * ------------------------------------------------------------------------- */
+
+export interface BadgeMeta {
+  icon: LucideIcon | null;
+  glyph: string | null;
+  color: string;
+  label: string;
+}
+
+export const BADGE_ALIAS: Record<string, string> = {
+  excellent: "best",
+  great: "best",
+  missed_win: "mistake",
+};
+
+const BADGES: Record<string, BadgeMeta> = {
+  book: { icon: BookOpen, glyph: null, color: "#92400e", label: "Book" },
+  forced: { icon: Square, glyph: null, color: "#44403c", label: "Forced" },
+  brilliant: { icon: Gem, glyph: null, color: "#0e7490", label: "Brilliant" },
+  best: { icon: Diamond, glyph: null, color: "#15803d", label: "Best" },
+  good: { icon: Star, glyph: null, color: "#16a34a", label: "Good" },
+  inaccuracy: { icon: null, glyph: "?!", color: "#ea580c", label: "Inaccuracy" },
+  mistake: { icon: null, glyph: "?!", color: "#ca8a04", label: "Mistake" },
+  blunder: { icon: null, glyph: "??", color: "#dc2626", label: "Blunder" },
+};
+
+/** Resolve a backend category (with aliases applied) into badge display meta. */
+export function badgeMeta(category: string): BadgeMeta {
+  const key = BADGE_ALIAS[category] ?? category;
+  return BADGES[key] ?? { icon: null, glyph: null, color: "#57534e", label: key };
+}
+
+/** Order used for merged classification tallies and review ClassBars. */
+export const BUCKET_ORDER = ["best", "book", "good", "forced", "brilliant", "inaccuracy", "mistake", "blunder"];
+
+/** Collapse a backend category into its display bucket (aliases applied). */
+export function bucketOf(category: string): string {
+  return BADGE_ALIAS[category] ?? category;
+}
+
+/** Sum per-move counts into merged display buckets. */
+export function talliesFor(moves: Array<{ category: string }>): Record<string, number> {
+  const t: Record<string, number> = {};
+  for (const m of moves) {
+    const b = bucketOf(m.category);
+    t[b] = (t[b] ?? 0) + 1;
+  }
+  return t;
+}
+
+/** One scored move shape used by the live stats panel. */
+export interface ScoredMove {
+  mover: "white" | "black";
+  category: string;
+  cpLoss: number | null;
+  accuracy: number | null;
+  applicable: boolean;
+}
+
+export interface ScoredSummary {
+  accuracy: number | null;
+  avgCpLoss: number | null;
+  rating: number | null;
+  movesScored: number;
+}
+
+/**
+ * Aggregate eligible per-move stats exactly like the review summary: forced and
+ * un-scorable moves are excluded from the means (but still counted in tallies).
+ */
+export function summarizeEligible(moves: ScoredMove[]): ScoredSummary {
+  const scored = moves.filter((m) => m.applicable && m.accuracy !== null && m.cpLoss !== null);
+  const accuracy = scored.length ? scored.reduce((a, m) => a + (m.accuracy ?? 0), 0) / scored.length : null;
+  const avgCpLoss = scored.length ? scored.reduce((a, m) => a + (m.cpLoss ?? 0), 0) / scored.length : null;
+  return {
+    accuracy: accuracy === null ? null : Math.round(accuracy * 100) / 100,
+    avgCpLoss: avgCpLoss === null ? null : Math.round(avgCpLoss * 100) / 100,
+    rating: estimateRating(avgCpLoss),
+    movesScored: scored.length,
+  };
+}
+
+/* ---------------------------------------------------------------------------
+ * Rating estimate (Luka - Chess Engine's own documented model)
+ *
+ * Maps average centipawn loss to an approximate rating with piecewise-linear
+ * knots. Estimate only — not an official rating, no Chess.com/Lichess parity.
+ * ------------------------------------------------------------------------- */
+
+const RATING_KNOTS: Array<[number, number]> = [
+  [240, 600],
+  [140, 800],
+  [100, 950],
+  [70, 1150],
+  [50, 1350],
+  [35, 1500],
+  [25, 1650],
+  [18, 1800],
+  [12, 1950],
+  [8, 2050],
+  [0, 2200],
+];
+const RATING_FLOOR = 400;
+const RATING_CEIL = 2800;
+
+export function estimateRating(avgCpLoss: number | null | undefined): number | null {
+  if (avgCpLoss === null || avgCpLoss === undefined || Number.isNaN(avgCpLoss)) return null;
+  const loss = Math.max(0, avgCpLoss);
+  let rating: number | null = null;
+  for (let i = 0; i < RATING_KNOTS.length; i++) {
+    const [x, y] = RATING_KNOTS[i];
+    if (loss >= x) {
+      if (i === 0) {
+        rating = y;
+      } else {
+        const [xPrev, yPrev] = RATING_KNOTS[i - 1];
+        const t = xPrev > x ? (loss - x) / (xPrev - x) : 0;
+        rating = y + (yPrev - y) * t;
+      }
+      break;
+    }
+  }
+  if (rating === null) rating = RATING_KNOTS[RATING_KNOTS.length - 1][1];
+  return Math.round(Math.min(RATING_CEIL, Math.max(RATING_FLOOR, rating)));
 }
 
 export function moveLabel(m: ReviewMove): string {

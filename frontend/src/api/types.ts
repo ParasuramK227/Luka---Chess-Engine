@@ -205,6 +205,28 @@ export interface ReviewResult {
   annotations: { comment: string; nag: number | null }[];
 }
 
+export interface AnalyzeMoveMove {
+  uci: string;
+  san: string;
+  mover: "white" | "black";
+  category: string;
+  category_label: string;
+  reason: Record<string, unknown> & { rule?: string };
+  nag: number | null;
+  metrics: ReviewMove["metrics"];
+  best_move_uci: string | null;
+  best_move_san: string | null;
+  best_pv_san: string[];
+  eval_before: EngineScore | null;
+  eval_after: EngineScore | null;
+  material_given: number;
+}
+
+/** Per-move analysis: AnalysisResult plus the classified last move (if any). */
+export interface AnalyzeMoveResult extends AnalysisResult {
+  move: AnalyzeMoveMove | null;
+}
+
 export interface EngineStatus {
   available: boolean;
   name: string | null;
@@ -254,6 +276,8 @@ export interface Settings {
     show_legal_moves: boolean;
     sound: boolean;
     arrow_best_move: boolean;
+    auto_analyze: boolean;
+    live_depth: number;
   };
   online_import: { enabled: boolean; timeout_s: number };
 }

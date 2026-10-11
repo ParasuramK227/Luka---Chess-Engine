@@ -216,6 +216,33 @@ export function SettingsView() {
               </Select>
             </div>
           ) : null}
+          <div className="mt-3 space-y-2 border-t border-stone-800 pt-3">
+            <Toggle
+              checked={Boolean(draft.board.auto_analyze)}
+              onChange={(v) => setBrd({ auto_analyze: v })}
+              label="Analyze automatically after each move"
+            />
+            {draft.board.auto_analyze ? (
+              <div className="flex items-center justify-between text-sm text-stone-300">
+                <span>Auto-analysis depth</span>
+                <Select
+                  className="w-32"
+                  value={String(draft.board.live_depth)}
+                  onChange={(e) => setBrd({ live_depth: Number(e.target.value) })}
+                >
+                  {[10, 12, 14, 16, 18, 20, 22, 24].map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            ) : null}
+            <p className="text-[11px] leading-relaxed text-stone-500">
+              When on, every move you make is analysed locally at the chosen depth (badge on the moved piece, live score,
+              engine lines, and game-level stats without pressing Analyze).
+            </p>
+          </div>
         </Card>
 
         <Card title="Storage & cache">

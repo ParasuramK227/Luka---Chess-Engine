@@ -1,10 +1,24 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api/client";
 import { useApp } from "../state/AppContext";
 import { useJob } from "../hooks/useJob";
-import type { AnalysisResult, EvalLine, EngineScore } from "../api/types";
+import type { AnalysisResult, AnalyzeMoveResult, EvalLine, EngineScore, ReviewMove } from "../api/types";
 import { formatEval } from "../lib/format";
 import { Button, ProgressBar, Select, Spinner, clsx } from "./ui";
+
+export interface LiveMoveInfo {
+  /** FEN (after the move) this classification applies to. */
+  fen: string;
+  ply: number;
+  category: string;
+  categoryLabel: string;
+  cpLoss: number | null;
+  accuracy: number | null;
+  san: string;
+  uci: string;
+  mover: "white" | "black";
+  metrics: ReviewMove["metrics"];
+}
 
 export interface LiveAnalysisState {
   /** Best line of the last finished analysis for the *current* fen, if any. */
@@ -12,30 +26,64 @@ export interface LiveAnalysisState {
   firstLine?: EvalLine | null;
   pvUci: string[];
   analyzing: boolean;
+  /** Classification of the last played move (auto-analysis), if known. */
+  move?: LiveMoveInfo | null;
 }
+
+const AUTO_DEBOUNCE_MS = 400;
 
 export function LiveAnalysis({
   onAnalysisChange,
 }: {
   onAnalysisChange?: (state: LiveAnalysisState) => void;
 }) {
-  const { board, analyzeDepth, setAnalyzeDepth, analyzeMultipv, setAnalyzeMultipv, engine, toast } = useApp();
+  const { board, analyzeDepth, setAnalyzeDepth, analyzeMultipv, setAnalyzeMultipv, engine, settings, toast } = useApp();
   const { jobId, snapshot, result, running, start, cancel, clear } = useJob();
+
+  const autoAnalyze = settings?.board?.auto_analyze ?? true;
+  const liveDepth = settings?.board?.live_depth ?? 18;
 
   const [lines, setLines] = useState<EvalLine[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [moveInfo, setMoveInfo] = useState<LiveMoveInfo | null>(null);
+  const [autoMode, setAutoMode] = useState(false);
 
   // Position marker of the analysis that produced `result`/`lines`.
   const [analyzedFen, setAnalyzedFen] = useState<string | null>(null);
 
+  const jobIdRef = useRef<string | null>(null);
+  jobIdRef.current = jobId;
+
+  // What the *next* (auto) analysis corresponds to, including the ply that made
+  // the move, so classification can be attributed to the right ply later.
+  const pendingRef = useRef<{ fen: string; prevFen: string | null; ply: number } | null>(null);
+
   const handleResult = useCallback((r: unknown) => {
     const res = r as AnalysisResult;
     if (res?.lines) setLines(res.lines);
+    const moveResult = (r as AnalyzeMoveResult).move;
+    const pending = pendingRef.current;
+    if (moveResult && pending && moveResult.uci) {
+      setMoveInfo({
+        fen: pending.fen,
+        ply: pending.ply,
+        category: moveResult.category,
+        categoryLabel: moveResult.category_label,
+        cpLoss: moveResult.metrics?.cp_loss ?? null,
+        accuracy: moveResult.metrics?.accuracy ?? null,
+        san: moveResult.san,
+        uci: moveResult.uci,
+        mover: moveResult.mover,
+        metrics: moveResult.metrics,
+      });
+    }
   }, []);
 
   const startAnalysis = useCallback(async () => {
     if (!board.fen) return;
+    pendingRef.current = null;
     setError(null);
+    setAutoMode(false);
     try {
       const { job_id } = await api.analyze({
         fen: board.fen,
@@ -49,6 +97,46 @@ export function LiveAnalysis({
       toast((e as Error).message, "error");
     }
   }, [board.fen, analyzeDepth, analyzeMultipv, start, toast]);
+
+  /** Automatic per-move analysis: classify the move just played at depth 18. */
+  const runAuto = useCallback(async () => {
+    if (!board.fen || board.cursor <= 0) return;
+    const prevFen = board.fens[board.cursor - 1] ?? null;
+    pendingRef.current = { fen: board.fen, prevFen, ply: board.cursor };
+    // Drop whatever is in flight so analyses never pile up on the server.
+    if (jobIdRef.current) {
+      try {
+        await api.cancelJob(jobIdRef.current);
+      } catch {
+        /* job already finished */
+      }
+    }
+    try {
+      const { job_id } = await api.analyzeMove({
+        fen: board.fen,
+        prev_fen: prevFen ?? undefined,
+        sans: board.sans.slice(0, board.cursor),
+        depth: liveDepth,
+        multipv: analyzeMultipv,
+      });
+      setError(null);
+      setAutoMode(true);
+      start(job_id);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }, [board.fen, board.cursor, board.fens, board.sans, liveDepth, analyzeMultipv, start]);
+
+  // Auto-analysis after every move (debounced, cancelling the previous job);
+  // also fires on cursor navigation (undo/redo/load) so any replayed position
+  // gets fresh lines and a badge for the move that reached it.
+  useEffect(() => {
+    if (!autoAnalyze || !engine?.available || board.cursor <= 0) return;
+    const timer = window.setTimeout(() => {
+      void runAuto();
+    }, AUTO_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [board.fen, board.cursor, autoAnalyze, engine?.available, runAuto]);
 
   // Live info during search comes through snapshot.data.lines
   const liveLines = useMemo<EvalLine[]>(() => {
@@ -69,7 +157,7 @@ export function LiveAnalysis({
     if (result) handleResult(result);
   }, [result, handleResult]);
 
-  // Expose first line + eval to the parent (for the eval bar / arrows).
+  // Expose first line + eval + last-move classification to the parent.
   useEffect(() => {
     const first = liveLines[0] ?? null;
     onAnalysisChange?.({
@@ -77,10 +165,12 @@ export function LiveAnalysis({
       firstLine: first,
       pvUci: first?.pv_uci ?? [],
       analyzing: running,
+      move: moveInfo,
     });
-  }, [liveLines, running, onAnalysisChange]);
+  }, [liveLines, running, moveInfo, onAnalysisChange]);
 
   const restart = useCallback(() => {
+    pendingRef.current = null;
     clear();
     void startAnalysis();
   }, [clear, startAnalysis]);
@@ -127,6 +217,16 @@ export function LiveAnalysis({
             ))}
           </Select>
         </label>
+        {autoMode && autoAnalyze ? (
+          <span className="rounded bg-violet-950/60 px-1.5 py-0.5 text-[10px] font-medium text-violet-300">
+            auto · depth {liveDepth}
+          </span>
+        ) : null}
+        {!autoAnalyze ? (
+          <span className="rounded bg-stone-800 px-1.5 py-0.5 text-[10px] text-stone-500" title="Auto-analysis is off — see Settings">
+            auto off
+          </span>
+        ) : null}
       </div>
 
       {running ? (

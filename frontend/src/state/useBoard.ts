@@ -202,8 +202,14 @@ export function useBoard(): BoardModel {
 
   const navigateToPly = useCallback(
     (ply: number) => {
-      const { fens, sans } = posRef.current;
-      commit({ fens, sans, cursor: Math.max(0, Math.min(fens.length - 1, ply)) });
+      const { fens, sans, cursor } = posRef.current;
+      const nextCursor = Math.max(0, Math.min(fens.length - 1, ply));
+      // No-op when the cursor is already there: `commit` always stores a new
+      // object, and repeatedly committing the same ply (e.g. an effect that
+      // re-runs with an unstable callback identity) would force an infinite
+      // re-render loop.
+      if (nextCursor === cursor) return;
+      commit({ fens, sans, cursor: nextCursor });
     },
     [commit],
   );

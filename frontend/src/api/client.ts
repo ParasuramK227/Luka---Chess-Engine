@@ -1,5 +1,6 @@
 import type {
   AnalysisResult,
+  AnalyzeMoveResult,
   EngineStatus,
   FenValidation,
   JobSnapshot,
@@ -91,6 +92,10 @@ export const api = {
     return post("/jobs/analyze", body);
   },
 
+  analyzeMove(body: { fen: string; prev_fen?: string; sans?: string[]; depth?: number; multipv?: number }): Promise<{ job_id: string }> {
+    return post("/jobs/analyze_move", body);
+  },
+
   review(body: { game_id?: string; pgn?: string; game_index?: number; depth?: number; max_positions?: number }): Promise<{ job_id: string }> {
     return post("/jobs/review", body);
   },
@@ -99,7 +104,7 @@ export const api = {
     return request(`/jobs/${id}`);
   },
 
-  jobResult(id: string): Promise<JobSnapshot & { result: AnalysisResult | ReviewResult }> {
+  jobResult(id: string): Promise<JobSnapshot & { result: AnalysisResult | ReviewResult | AnalyzeMoveResult }> {
     return request(`/jobs/${id}/result`);
   },
 

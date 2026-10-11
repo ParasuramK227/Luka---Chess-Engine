@@ -17,6 +17,7 @@ from flask_cors import CORS
 
 from .analysis import reports as report_service
 from .analysis.game_review import run_review
+from .analysis.single_move import analyse_move
 from .context import AppContext
 from .engine.analysis_service import analyse_fen, legal_moves
 from .engine.stockfish_manager import EngineUnavailable
@@ -214,6 +215,49 @@ def job_analyze():
         return result
 
     job_id = ctx.jobs.submit("analyze", run)
+    return jsonify({"job_id": job_id}), 202
+
+
+@api.post("/jobs/analyze_move")
+def job_analyze_move():
+    ctx = get_ctx()
+    body = request.get_json(silent=True) or {}
+    fen = body.get("fen") or chess.STARTING_FEN
+    check = validate_fen(fen)
+    if not check["valid"]:
+        return error(check["error"] or "Invalid FEN", 400, "invalid_fen")
+
+    prev_fen = body.get("prev_fen")
+    if prev_fen:
+        pcheck = validate_fen(prev_fen)
+        if not pcheck["valid"]:
+            return error(pcheck["error"] or "Invalid previous FEN", 400, "invalid_fen")
+
+    sans = body.get("sans")
+    if sans is not None and not isinstance(sans, list):
+        return error("sans must be a list of SAN strings", 400, "bad_request")
+
+    board_cfg = ctx.settings.get("board") or {}
+    eng = ctx.settings.get("engine")
+    depth = int(body.get("depth", board_cfg.get("live_depth", eng.get("depth", 18))))
+    multipv = int(body.get("multipv", 2))
+    thresholds = ctx.settings.get("classification")
+
+    def run(job):
+        ctx.ensure_engine()
+        return analyse_move(
+            ctx.engine,
+            fen=fen,
+            prev_fen=prev_fen,
+            sans=sans,
+            depth=depth,
+            multipv=multipv,
+            thresholds=thresholds,
+            book=ctx.book,
+            job=job,
+        )
+
+    job_id = ctx.jobs.submit("analyze_move", run)
     return jsonify({"job_id": job_id}), 202
 
 

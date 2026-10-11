@@ -5,6 +5,7 @@ import { Chess } from "chess.js";
 import type { Arrow, PromotionPieceOption, Square } from "../lib/boardTypes";
 import { useApp } from "../state/AppContext";
 import type { EngineScore } from "../api/types";
+import { badgeMeta } from "../lib/format";
 import { EvalBar } from "./EvalBar";
 import { Button, clsx, Input } from "./ui";
 
@@ -59,6 +60,40 @@ export interface BoardViewProps {
   onSquareClick?: (square: string) => void;
   statusLine?: string;
   showControls?: boolean;
+  /** Move-quality badges drawn over the board, keyed by target square. */
+  moveBadges?: Array<{ square: string; category: string }>;
+}
+
+/**
+ * Pixels offsets of a square's top-right chip position for a given board size
+ * and orientation (mirrors how react-chessboard lays out the ranks/files).
+ */
+function squareChipPos(sq: string, size: number, orientation: "white" | "black") {
+  const file = sq.charCodeAt(0) - 97; // 'a' -> 0
+  const rank = parseInt(sq[1], 10) - 1; // '1' -> 0
+  const s = size / 8;
+  const col = orientation === "black" ? 7 - file : file;
+  const row = orientation === "black" ? 7 - rank : rank;
+  return { left: col * s, top: row * s, s };
+}
+
+function MoveBadgeChip({ category, size }: { category: string; size: number }) {
+  const meta = badgeMeta(category);
+  const Icon = meta.icon;
+  return (
+    <div
+      className="grid place-items-center rounded border border-black/40 shadow-sm ring-1 ring-white/15"
+      style={{ width: size, height: size, backgroundColor: meta.color }}
+    >
+      {Icon ? (
+        <Icon size={Math.round(size * 0.62)} className="text-white" strokeWidth={3} />
+      ) : meta.glyph ? (
+        <span className="font-bold leading-none text-white" style={{ fontSize: Math.round(size * 0.52) }}>
+          {meta.glyph}
+        </span>
+      ) : null}
+    </div>
+  );
 }
 
 export function BoardView({
@@ -69,6 +104,7 @@ export function BoardView({
   onSquareClick,
   statusLine,
   showControls = true,
+  moveBadges = [],
 }: BoardViewProps) {
   const { board, toast, settings } = useApp();
   const showCoords = settings?.board?.show_coordinates ?? true;
@@ -232,6 +268,25 @@ export function BoardView({
             onPromotionPieceSelect={promoSelected}
             autoPromoteToQueen={false}
           />
+          {(boardSize && moveBadges?.length) ? (
+            <div className="pointer-events-none absolute inset-0 z-10">
+              {moveBadges.map((badge, i) => {
+                const pos = squareChipPos(badge.square, boardSize, board.orientation);
+                const chip = Math.max(16, Math.min(26, Math.round(pos.s * 0.34)));
+                const inset = Math.max(2, Math.round(chip * 0.08));
+                return (
+                  <div
+                    key={`${badge.square}-${i}`}
+                    className="absolute"
+                    title={badgeMeta(badge.category).label}
+                    style={{ left: pos.left + pos.s - chip - inset, top: pos.top + inset }}
+                  >
+                    <MoveBadgeChip category={badge.category} size={chip} />
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
         </div>
         {showControls ? (
           <div className="mt-2 flex flex-wrap items-center gap-1.5">

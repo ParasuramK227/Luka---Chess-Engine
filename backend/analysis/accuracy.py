@@ -130,3 +130,50 @@ def summarize(move_metrics: list[dict]) -> dict:
         "accuracy": round(sum(accuracies) / len(accuracies), 2) if accuracies else None,
         "median_cp_loss": round(sorted(cp_losses)[len(cp_losses) // 2], 2) if cp_losses else None,
     }
+
+
+# ---------------------------------------------------------------------------
+# Rating estimate (Luka - Chess Engine's own model)
+# ---------------------------------------------------------------------------
+#
+# A documented, deliberately simple mapping from average centipawn loss to an
+# approximate rating. It is an *estimate* for casual orienteering — not an
+# official rating, and not a Chess.com or Lichess figure (we make no parity
+# claim). Knots are (avg centipawn loss, rating); values between knots are
+# linearly interpolated. A loss >= 240 maps to the floor, a loss of 0 to the
+# ceiling of the model.
+_RATING_KNOTS: tuple[tuple[float, float], ...] = (
+    (240.0, 600.0),   # very poor performance
+    (140.0, 800.0),
+    (100.0, 950.0),
+    (70.0, 1150.0),
+    (50.0, 1350.0),
+    (35.0, 1500.0),
+    (25.0, 1650.0),
+    (18.0, 1800.0),
+    (12.0, 1950.0),
+    (8.0, 2050.0),
+    (0.0, 2200.0),    # near-perfect play
+)
+_RATING_FLOOR = 400.0
+_RATING_CEILING = 2800.0
+
+
+def estimate_rating(average_cp_loss: float | None) -> float | None:
+    """Map an average centipawn loss to an approximate rating (see model above)."""
+    if average_cp_loss is None:
+        return None
+    loss = max(0.0, float(average_cp_loss))
+    rating = None
+    for i, (x, y) in enumerate(_RATING_KNOTS):
+        if loss >= x:
+            if i == 0:
+                rating = y
+            else:
+                x_prev, y_prev = _RATING_KNOTS[i - 1]
+                t = (loss - x) / (x_prev - x) if x_prev > x else 0.0
+                rating = y + (y_prev - y) * t
+            break
+    if rating is None:
+        rating = _RATING_KNOTS[-1][1]
+    return round(min(_RATING_CEILING, max(_RATING_FLOOR, rating)), 0)

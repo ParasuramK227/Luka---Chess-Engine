@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { Component, useEffect, type ReactNode } from "react";
 import { AppProvider, useApp, type TabId } from "./state/AppContext";
 import { BoardPanel } from "./components/BoardPanel";
 import { ReviewView } from "./components/ReviewView";
@@ -7,7 +7,45 @@ import { OpeningsView } from "./components/OpeningsView";
 import { SettingsView } from "./components/SettingsView";
 import { EngineBadge } from "./components/EngineBadge";
 import { Toasts } from "./components/Toasts";
-import { clsx } from "./components/ui";
+import { Button, clsx } from "./components/ui";
+
+/**
+ * Top-level crash guard: if a render throws the app shows a recoverable error
+ * screen instead of a black page, so a broken view can never permanently brick
+ * the UI. "Reload" resets local state and re-renders; "New game" additionally
+ * resets the board for a clean slate.
+ */
+export class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state: { error: Error | null } = { error: null };
+
+  static getDerivedStateFromError(error: Error): { error: Error | null } {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, info: unknown) {
+    console.error("Luka UI crashed:", error, info);
+  }
+
+  render() {
+    if (!this.state.error) return this.props.children;
+    return (
+      <div className="grid min-h-screen place-items-center bg-stone-950 px-4">
+        <div className="w-full max-w-md rounded-lg border border-red-900/60 bg-stone-900 p-6 text-center">
+          <h1 className="text-lg font-bold text-red-300">Something went wrong</h1>
+          <p className="mt-2 break-words text-xs text-stone-400">
+            {this.state.error.message || "The UI hit an unexpected error."}
+          </p>
+          <div className="mt-4 flex justify-center gap-2">
+            <Button onClick={() => this.setState({ error: null })}>Reload view</Button>
+            <Button variant="subtle" onClick={() => window.location.reload()}>
+              Reload app
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "board", label: "Board" },
@@ -78,8 +116,10 @@ function Shell() {
 
 export default function App() {
   return (
-    <AppProvider>
-      <Shell />
-    </AppProvider>
+    <ErrorBoundary>
+      <AppProvider>
+        <Shell />
+      </AppProvider>
+    </ErrorBoundary>
   );
 }

@@ -5,9 +5,10 @@ import { useJob } from "../hooks/useJob";
 import type { EngineScore, LibraryEntry, ParsedGame, ReviewResult } from "../api/types";
 import { BoardView } from "./BoardView";
 import { EvalGraph, EvalMark, pointsFromReview } from "./EvalGraph";
+import { LiveGameStats, type GameStatsPlayer } from "./LiveGameStats";
 import { MovesTable, type MoveCell } from "./MovesTable";
 import { Badge, Button, Card, EmptyState, Field, Input, ProgressBar, Select, Spinner, clsx } from "./ui";
-import { catMeta, formatCp, formatPct } from "../lib/format";
+import { badgeMeta, bucketOf, BUCKET_ORDER, catMeta, formatCp, formatPct, estimateRating } from "../lib/format";
 import { scoreToUnits } from "../lib/format";
 
 const WORTHY: Record<string, boolean> = {
@@ -63,7 +64,10 @@ export function ReviewView() {
       setSelectedPly(ply);
       board.navigateToPly(ply);
     },
-    [board],
+    // `board.navigateToPly` is a stable closure; `board` itself is a fresh
+    // object each render and must not be a dependency (unstable deps made the
+    // result-effect re-run forever, looping on adoptReview -> navigateToPly).
+    [board.navigateToPly],
   );
 
   const adoptReview = useCallback(
@@ -256,6 +260,47 @@ export function ReviewView() {
   const white = summary?.white;
   const black = summary?.black;
 
+  // Per-ply badges: show the saved category on the target square of the move
+  // that reached the selected position.
+  const reviewBadges = useMemo(() => {
+    if (!review || selectedPly <= 0) return [];
+    const m = review.moves.find((x) => x.ply === selectedPly);
+    if (!m) return [];
+    return [{ square: `${m.uci[2]}${m.uci[3]}`, category: m.category }];
+  }, [review, selectedPly]);
+
+  const reviewTallies = useMemo(() => {
+    const t: Record<string, number> = {};
+    for (const s of [white, black]) {
+      if (!s?.classifications) continue;
+      for (const [k, v] of Object.entries(s.classifications)) {
+        const b = bucketOf(k);
+        t[b] = (t[b] ?? 0) + v;
+      }
+    }
+    return t;
+  }, [white, black]);
+
+  const reviewPlayers = useMemo<Record<"white" | "black", GameStatsPlayer>>(() => {
+    const build = (s: ReviewResult["summary"]["white"] | undefined, name: string): GameStatsPlayer => ({
+      name,
+      accuracy: s?.accuracy ?? null,
+      avgCpLoss: s?.average_cp_loss ?? null,
+      rating: estimateRating(s?.average_cp_loss),
+      movesScored: s?.moves_scored ?? 0,
+    });
+    return {
+      white: build(white, review?.game?.headers?.["White"] || "White"),
+      black: build(black, review?.game?.headers?.["Black"] || "Black"),
+    };
+  }, [white, black, review]);
+
+  const reviewLastMove = useMemo(() => {
+    if (!review || !review.moves.length) return null;
+    const m = review.moves[review.moves.length - 1];
+    return { label: `${m.move_number}${m.mover === "white" ? "." : "…"} ${m.san}`, category: m.category };
+  }, [review]);
+
   const download = (id: string, fmt: "html" | "pgn" | "csv" | "json", label: string) => async () => {
     try {
       const { content, filename } = await downloadReport(id, fmt);
@@ -277,7 +322,7 @@ export function ReviewView() {
   const exportId = resolvedId;
   const canExport = Boolean(exportId && review?.complete);
 
-  if (srcMode === "library" && reviewedGames.length === 0) {
+  if (srcMode === "library" && reviewedGames.length === 0 && !review) {
     return (
       <div className="space-y-4">
         <Card title="Choose a game">
@@ -370,7 +415,7 @@ export function ReviewView() {
 
       {review ? (
         <>
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,auto)_320px_340px]">
             <div className="space-y-4">
               <Card
                 title="2 · Board"
@@ -384,12 +429,21 @@ export function ReviewView() {
                   </div>
                 }
               >
-                <BoardView readOnly evalScore={evalAtPly} />
+                <BoardView readOnly evalScore={evalAtPly} moveBadges={reviewBadges} />
               </Card>
               <Card title="3 · Eval graph" right={<span className="text-[10px] text-stone-500">click a point to jump</span>}>
                 <EvalGraph points={pointsFromReview(review.positions)} marks={marks} onClick={(ply) => jumpTo(ply)} />
               </Card>
             </div>
+            <LiveGameStats
+              white={reviewPlayers.white}
+              black={reviewPlayers.black}
+              tallies={reviewTallies}
+              moveCount={review.moves.length}
+              totalPlies={review.moves.length}
+              lastMove={reviewLastMove}
+              note="from saved review"
+            />
             <div className="space-y-4">
               <Card title="Accuracy">
                 {white && black ? (
@@ -507,25 +561,27 @@ function PlayerScore({ name, side, s }: { name: string; side: "w" | "b"; s: { ac
 }
 
 function ClassBars({ white, black }: { white?: ReviewResult["summary"]["white"]; black?: ReviewResult["summary"]["black"] }) {
-  const order = ["best", "excellent", "good", "book", "inaccuracy", "mistake", "blunder", "missed_win", "great", "brilliant"];
   const totals: Record<string, number> = {};
   for (const s of [white, black]) {
     if (!s?.classifications) continue;
-    for (const [k, v] of Object.entries(s.classifications)) totals[k] = (totals[k] ?? 0) + v;
+    for (const [k, v] of Object.entries(s.classifications)) {
+      const bucket = bucketOf(k);
+      totals[bucket] = (totals[bucket] ?? 0) + v;
+    }
   }
   const max = Math.max(1, ...Object.values(totals));
   if (Object.keys(totals).length === 0) return <p className="text-xs text-stone-500">No classified moves.</p>;
   return (
     <div className="space-y-1.5">
-      {order.map((cat) => {
-        const n = totals[cat] ?? 0;
+      {BUCKET_ORDER.map((bucket) => {
+        const n = totals[bucket] ?? 0;
         if (!n) return null;
-        const meta = catMeta(cat);
+        const meta = badgeMeta(bucket);
         return (
-          <div key={cat} className="flex items-center gap-2 text-xs">
-            <span className="w-20 truncate text-stone-400">{meta.label}</span>
+          <div key={bucket} className="flex items-center gap-2 text-xs">
+            <span className="w-24 truncate text-stone-400">{meta.label}</span>
             <div className="h-2.5 flex-1 overflow-hidden rounded bg-stone-800">
-              <div className={clsx("h-full rounded", meta.cls)} style={{ width: `${(n / max) * 100}%` }} />
+              <div className="h-full rounded" style={{ width: `${(n / max) * 100}%`, backgroundColor: meta.color }} />
             </div>
             <span className="w-6 text-right tabular-nums text-stone-300">{n}</span>
           </div>

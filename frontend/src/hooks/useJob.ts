@@ -114,6 +114,13 @@ export function useJob(onComplete?: (result: unknown) => void): JobHookState {
   }, [jobId, fetchResult]);
 
   const start = useCallback((id: string) => {
+    // Reset everything for the new job so a previous job's `result` (and its
+    // completion) can never leak into the new one — a stale result being
+    // treated as the new job's output was the source of a black-screen bug.
+    finishedRef.current = false;
+    setResult(null);
+    setSnapshot(null);
+    setRunning(false);
     setJobId(id);
   }, []);
 
