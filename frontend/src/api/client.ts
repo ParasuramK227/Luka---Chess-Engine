@@ -61,7 +61,7 @@ function put<T>(path: string, body?: unknown): Promise<T> {
 // ---- engine ---------------------------------------------------------------
 
 export const api = {
-  health(): Promise<{ status: string; engine: boolean; data_dir: string; cache_entries: number }> {
+  health(): Promise<{ status: string; engine: EngineStatus; data_dir: string; cache_entries: number }> {
     return request("/health");
   },
 
