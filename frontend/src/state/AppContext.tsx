@@ -32,8 +32,9 @@ interface AppContextValue {
   refreshLibrary: () => Promise<void>;
 
   /** Open a specific library game in the Review tab. */
-  openGameInReview: (id: string) => void;
+  openGameInReview: (id: string, opts?: { autoStart?: boolean }) => void;
   pendingReviewId: string | null;
+  pendingReviewAutoStart: boolean;
   clearPendingReview: () => void;
 
   analyzeDepth: number;
@@ -64,6 +65,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [library, setLibrary] = useState<LibraryEntry[]>([]);
   const [libraryLoading, setLibraryLoading] = useState(false);
   const [pendingReviewId, setPendingReviewId] = useState<string | null>(null);
+  const [pendingReviewAutoStart, setPendingReviewAutoStart] = useState(false);
   const [analyzeDepth, setAnalyzeDepth] = useState(18);
   const [analyzeMultipv, setAnalyzeMultipv] = useState(1);
 
@@ -140,12 +142,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const openGameInReview = useCallback((id: string) => {
+  const openGameInReview = useCallback((id: string, opts?: { autoStart?: boolean }) => {
     setPendingReviewId(id);
+    setPendingReviewAutoStart(Boolean(opts?.autoStart));
     setTab("review");
   }, []);
 
-  const clearPendingReview = useCallback(() => setPendingReviewId(null), []);
+  const clearPendingReview = useCallback(() => {
+    setPendingReviewId(null);
+    setPendingReviewAutoStart(false);
+  }, []);
 
   useEffect(() => {
     void refreshEngine();
@@ -172,6 +178,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       refreshLibrary,
       openGameInReview,
       pendingReviewId,
+      pendingReviewAutoStart,
       clearPendingReview,
       analyzeDepth,
       setAnalyzeDepth,
@@ -183,7 +190,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }),
     [
       tab, board, engine, engineLoading, refreshEngine, restartEngine, settings, updateSettings,
-      library, libraryLoading, refreshLibrary, openGameInReview, pendingReviewId, clearPendingReview,
+      library, libraryLoading, refreshLibrary, openGameInReview, pendingReviewId, pendingReviewAutoStart, clearPendingReview,
       analyzeDepth, setAnalyzeDepth, analyzeMultipv, setAnalyzeMultipv, toasts, toast, dismissToast,
     ],
   );

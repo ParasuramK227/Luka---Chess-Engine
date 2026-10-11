@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { Chessboard } from "react-chessboard";
 import { Chess } from "chess.js";
@@ -10,6 +10,46 @@ import { Button, clsx, Input } from "./ui";
 
 const LIGHT = "#f0d9b5";
 const DARK = "#b58863";
+
+// Horizontal space kept for the eval bar beside the board (bar + gap + label).
+const EVALBAR_SPACE = 72;
+
+/**
+ * Fit the board inside the viewport. The board is sized to the smaller of the
+ * available column width and the vertical space remaining below its own top
+ * edge, so it is always fully visible without scrolling.
+ */
+function useBoardSize(reserveBottom: number) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [size, setSize] = useState(() =>
+    typeof window === "undefined" ? 480 : Math.max(220, Math.min(560, window.innerHeight - 240)),
+  );
+
+  useEffect(() => {
+    const compute = () => {
+      const el = ref.current;
+      if (!el) return;
+      const width = el.clientWidth - EVALBAR_SPACE;
+      const top = el.getBoundingClientRect().top;
+      const availH = window.innerHeight - top - reserveBottom;
+      const next = Math.max(220, Math.floor(Math.min(width, availH)));
+      setSize((prev) => (Math.abs(prev - next) > 1 ? next : prev));
+    };
+    compute();
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined" && ref.current) {
+      ro = new ResizeObserver(compute);
+      ro.observe(ref.current);
+    }
+    window.addEventListener("resize", compute);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener("resize", compute);
+    };
+  }, [reserveBottom]);
+
+  return { ref, size };
+}
 
 export interface BoardViewProps {
   readOnly?: boolean;
@@ -33,6 +73,10 @@ export function BoardView({
   const { board, toast, settings } = useApp();
   const showCoords = settings?.board?.show_coordinates ?? true;
   const showLegalDots = settings?.board?.show_legal_moves ?? true;
+
+  // Leave room for the controls row + status line + footer below the board.
+  const reserveBottom = showControls ? 128 : 84;
+  const { ref: boardBoxRef, size: boardSize } = useBoardSize(reserveBottom);
 
   const game = useMemo(() => new Chess(board.fen), [board.fen]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -163,12 +207,16 @@ export function BoardView({
             : `${board.status.turnName[0].toUpperCase()}${board.status.turnName.slice(1)} to move`);
 
   return (
-    <div className="flex gap-3">
-      <div className="min-w-0 flex-1">
+    <div ref={boardBoxRef} className="flex items-start gap-3">
+      <div
+        className="min-w-0"
+        style={boardSize ? { width: boardSize, flex: "0 0 auto" } : undefined}
+      >
         <div className="relative">
           <Chessboard
             id="main-board"
             position={board.fen}
+            boardWidth={boardSize || undefined}
             boardOrientation={board.orientation}
             onPieceDrop={readOnly ? undefined : (s, t) => maybeMove(s, t)}
             onSquareClick={handleSquareClick}
@@ -235,7 +283,7 @@ export function BoardView({
         ) : null}
         <p className={clsx("mt-1.5 text-xs", board.status.check ? "font-semibold text-red-400" : "text-stone-500")}>{statusText}</p>
       </div>
-      <EvalBar evalScore={evalScore} height="100%" />
+      <EvalBar evalScore={evalScore} height={boardSize ? `${boardSize}px` : "100%"} />
     </div>
   );
 }

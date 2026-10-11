@@ -30,12 +30,12 @@ function Shell() {
   return (
     <div className="flex min-h-full flex-col">
       <header className="border-b border-stone-800 bg-stone-950/80 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
+        <div className="flex max-w-7xl items-center gap-4 px-4 py-3">
           <div className="flex items-center gap-2">
             <span className="grid h-8 w-8 place-items-center rounded bg-emerald-700 text-sm font-black text-white">♞</span>
             <div>
               <h1 className="text-base font-bold leading-none text-stone-100">ChessLab</h1>
-              <p className="mt-0.5 text-[10px] leading-none text-stone-500">offline chess analysis · local stockfish</p>
+              <p className="mt-0.5 text-[10px] leading-none text-stone-500">local stockfish · offline analysis</p>
             </div>
           </div>
           <nav className="ml-2 flex flex-1 items-center gap-1 overflow-x-auto">
@@ -56,7 +56,7 @@ function Shell() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-4">
+      <main className="w-full max-w-7xl flex-1 px-4 py-4">
         {tab === "board" ? <BoardPanel /> : null}
         {tab === "review" ? <ReviewView /> : null}
         {tab === "library" ? <LibraryView /> : null}
@@ -65,7 +65,7 @@ function Shell() {
       </main>
 
       <footer className="border-t border-stone-800 py-3 text-center text-[11px] text-stone-600">
-        ChessLab · 100% local · no accounts · no telemetry · engine: Stockfish via UCI on 127.0.0.1:5001
+        ChessLab · analysis runs locally · offline by default · no accounts · no telemetry · optional online game import · engine: Stockfish via UCI on 127.0.0.1:5001
       </footer>
       <Toasts />
     </div>

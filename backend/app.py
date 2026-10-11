@@ -1,7 +1,8 @@
 """ChessLab Flask application and versioned REST API.
 
 Bind is 127.0.0.1 by default. All chess analysis runs locally through the
-Stockfish binary configured in settings; nothing here performs network access.
+Stockfish binary configured in settings. The only outbound network access is the
+optional, disabled-by-default username importer (see ``online_import``).
 """
 
 from __future__ import annotations
@@ -19,6 +20,13 @@ from .analysis.game_review import run_review
 from .context import AppContext
 from .engine.analysis_service import analyse_fen, legal_moves
 from .engine.stockfish_manager import EngineUnavailable
+from .online_import import (
+    OnlineImportError,
+    fetch_chesscom_pgn,
+    fetch_lichess_pgn,
+    is_standard_variant,
+    valid_username,
+)
 from .storage.pgn_service import PgnError, games_to_pgn, parse_pgn, validate_fen
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -409,6 +417,88 @@ def library_import():
         {
             "imported": len(added),
             "games": added,
+            "errors": parsed["errors"],
+        }
+    )
+
+
+@api.post("/library/import/online")
+def library_import_online():
+    """Import recent public games for a chess.com / lichess username.
+
+    Opt-in: returns 403 unless ``online_import.enabled`` is set in settings.
+    This is the only endpoint that performs outbound network access.
+    """
+    ctx = get_ctx()
+    body = request.get_json(silent=True) or {}
+
+    if not ctx.settings.get("online_import", "enabled", default=False):
+        return error(
+            "Online import is disabled. Enable it in Settings first.",
+            403,
+            "online_import_disabled",
+        )
+
+    source = str(body.get("source", "")).strip().lower()
+    username = str(body.get("username", "")).strip()
+    try:
+        count = int(body.get("count", 5))
+    except (TypeError, ValueError):
+        count = 5
+    count = max(1, min(20, count))
+
+    if source not in ("lichess", "chess.com"):
+        return error("source must be 'lichess' or 'chess.com'", 400, "bad_source")
+    if not valid_username(username):
+        return error("Invalid username", 400, "bad_username")
+
+    try:
+        timeout = float(ctx.settings.get("online_import", "timeout_s", default=15) or 15)
+    except (TypeError, ValueError):
+        timeout = 15.0
+
+    try:
+        if source == "lichess":
+            pgn_text = fetch_lichess_pgn(username, count, timeout)
+        else:
+            pgn_text = fetch_chesscom_pgn(username, count, timeout)
+    except OnlineImportError as exc:
+        status = 502 if exc.code in ("network_error", "http_error", "forbidden") else 404
+        return error(str(exc), status, exc.code)
+
+    try:
+        parsed = parse_pgn(pgn_text)
+    except PgnError as exc:
+        return error(f"Could not read games from {source}: {exc}", 502, "invalid_pgn")
+
+    added: list[dict] = []
+    skipped_variants = 0
+    for game in parsed["games"]:
+        if not is_standard_variant(game):
+            skipped_variants += 1
+            continue
+        entry = ctx.library.add(game, source_name=f"{source}:{username}")
+        added.append(
+            {
+                "id": entry["id"],
+                "duplicate": entry.get("duplicate", False),
+                "white": entry.get("white", ""),
+                "black": entry.get("black", ""),
+                "date": entry.get("date", ""),
+                "result": entry.get("result", "*"),
+            }
+        )
+
+    if not added and not parsed["games"]:
+        return error("No games found for this player", 404, "no_games")
+
+    return jsonify(
+        {
+            "imported": len(added),
+            "games": added,
+            "source": source,
+            "username": username,
+            "skipped_variants": skipped_variants,
             "errors": parsed["errors"],
         }
     )

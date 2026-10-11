@@ -255,6 +255,7 @@ export interface Settings {
     sound: boolean;
     arrow_best_move: boolean;
   };
+  online_import: { enabled: boolean; timeout_s: number };
 }
 
 export interface FenValidation {

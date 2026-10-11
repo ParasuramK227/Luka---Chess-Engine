@@ -76,6 +76,12 @@ DEFAULT_SETTINGS: dict[str, Any] = {
         "sound": False,
         "arrow_best_move": True,
     },
+    "online_import": {
+        # Optional feature; the only code path that touches the network.
+        # Disabled by default so normal operation stays fully offline.
+        "enabled": False,
+        "timeout_s": 15,
+    },
 }
 
 # Bounds used when validating user-supplied engine options.
@@ -150,6 +156,16 @@ def validate_settings(raw: dict) -> dict:
             cls[key] = max(0, int(cls.get(key, DEFAULT_SETTINGS["classification"][key])))
         except (TypeError, ValueError):
             cls[key] = DEFAULT_SETTINGS["classification"][key]
+
+    online = settings["online_import"]
+    if not isinstance(online, dict):
+        online = dict(DEFAULT_SETTINGS["online_import"])
+    online["enabled"] = bool(online.get("enabled", False))
+    try:
+        online["timeout_s"] = max(3, min(60, int(online.get("timeout_s", 15))))
+    except (TypeError, ValueError):
+        online["timeout_s"] = 15
+    settings["online_import"] = online
 
     return settings
 

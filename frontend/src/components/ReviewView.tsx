@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, downloadReport } from "../api/client";
 import { useApp } from "../state/AppContext";
 import { useJob } from "../hooks/useJob";
-import type { EngineScore, ParsedGame, ReviewResult } from "../api/types";
+import type { EngineScore, LibraryEntry, ParsedGame, ReviewResult } from "../api/types";
 import { BoardView } from "./BoardView";
 import { EvalGraph, EvalMark, pointsFromReview } from "./EvalGraph";
 import { MovesTable, type MoveCell } from "./MovesTable";
@@ -20,7 +20,7 @@ const WORTHY: Record<string, boolean> = {
 };
 
 export function ReviewView() {
-  const { board, library, refreshLibrary, settings, toast, setTab, pendingReviewId, clearPendingReview } = useApp();
+  const { board, library, refreshLibrary, settings, toast, setTab, pendingReviewId, pendingReviewAutoStart, clearPendingReview } = useApp();
 
   const [srcMode, setSrcMode] = useState<"library" | "pgn">("library");
   const [gameId, setGameId] = useState<string>("");
@@ -35,6 +35,8 @@ export function ReviewView() {
   const [error, setError] = useState<string | null>(null);
   const [selectedPly, setSelectedPly] = useState(-1);
   const [resolvedId, setResolvedId] = useState<string | null>(null);
+  // Id of a freshly-opened game that should start reviewing automatically.
+  const [autoRunId, setAutoRunId] = useState<string | null>(null);
 
   const defaultDepth = settings?.review?.depth ?? 10;
   useEffect(() => setDepth(defaultDepth), [defaultDepth]);
@@ -109,17 +111,32 @@ export function ReviewView() {
   useEffect(() => {
     if (!pendingReviewId) return;
     const id = pendingReviewId;
+    const autoStart = pendingReviewAutoStart;
     clearPendingReview();
     setSrcMode("library");
     setReview(null);
     setResolvedId(null);
-    const entry = library.find((g) => g.id === id);
-    if (entry) {
+
+    const adopt = (entry: LibraryEntry) => {
       setGameId(id);
       if (entry.analysis?.status === "complete") loadLibraryReview(id);
-      else board.loadParsedGame(entry);
+      else {
+        board.loadParsedGame(entry);
+        if (autoStart) setAutoRunId(id);
+      }
+    };
+
+    const entry = library.find((g) => g.id === id);
+    if (entry) {
+      adopt(entry);
+      return;
     }
-  }, [pendingReviewId, clearPendingReview, library, board, loadLibraryReview]);
+    // Freshly imported games may not be in the library snapshot yet.
+    void api
+      .libraryGet(id)
+      .then((fetched) => adopt(fetched))
+      .catch(() => toast("Imported game is not available yet", "error"));
+  }, [pendingReviewId, pendingReviewAutoStart, clearPendingReview, library, board, loadLibraryReview, toast]);
 
   const parsePgn = useCallback(async () => {
     setError(null);
@@ -180,6 +197,15 @@ export function ReviewView() {
       toast((e as Error).message, "error");
     }
   }, [srcMode, gameId, parsedGames, saveToLibrary, pgnText, pickIdx, depth, library, board, start, refreshLibrary, toast]);
+
+  // Auto-start reviewing a game opened with { autoStart: true } (e.g. straight
+  // after an online import) once it has been loaded into the board.
+  useEffect(() => {
+    if (!autoRunId) return;
+    if (gameId !== autoRunId || srcMode !== "library") return;
+    setAutoRunId(null);
+    void startReview();
+  }, [autoRunId, gameId, srcMode, startReview]);
 
   useEffect(() => {
     if (snapshot?.status === "error") setError(snapshot.error ?? "Review failed");

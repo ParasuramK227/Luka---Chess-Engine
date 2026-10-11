@@ -68,6 +68,8 @@ export function SettingsView() {
   const setCls = (patch: Partial<Settings["classification"]>) =>
     setDraft({ ...draft, classification: { ...draft.classification, ...patch } });
   const setBrd = (patch: Partial<Settings["board"]>) => setDraft({ ...draft, board: { ...draft.board, ...patch } });
+  const setOnline = (patch: Partial<Settings["online_import"]>) =>
+    setDraft({ ...draft, online_import: { ...draft.online_import, ...patch } });
 
   const clearCache = async () => {
     try {
@@ -229,8 +231,31 @@ export function SettingsView() {
               <Button small variant="ghost" onClick={() => void refreshEngine()}>Refresh engine status</Button>
             </div>
             <p className="text-stone-600">
-              Everything (settings.json, library, games, reports, cache) lives in the data directory and is never sent
-              anywhere — this app makes no network calls.
+              Everything (settings.json, library, games, reports, cache) lives in the data directory and stays on this
+              machine. The only network access is the optional online import above, off by default.
+            </p>
+          </div>
+        </Card>
+
+        <Card title="Online import (optional)">
+          <div className="space-y-2">
+            <Toggle
+              checked={Boolean(draft.online_import.enabled)}
+              onChange={(v) => setOnline({ enabled: v })}
+              label="Enable importing games by username from chess.com / lichess"
+            />
+            <Field label="Network timeout (seconds)">
+              <NumberInput
+                min={3}
+                max={60}
+                className="w-24"
+                value={draft.online_import.timeout_s}
+                onChange={(e) => setOnline({ timeout_s: Number(e.target.value) })}
+              />
+            </Field>
+            <p className="text-[11px] leading-relaxed text-stone-500">
+              Off by default. When enabled, the Library can fetch a player's most recent public games so you can review
+              them immediately. Only the username is sent, nothing is uploaded, and engine analysis stays fully local.
             </p>
           </div>
         </Card>

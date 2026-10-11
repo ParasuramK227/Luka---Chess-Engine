@@ -2,11 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api, downloadReport } from "../api/client";
 import { useApp } from "../state/AppContext";
 import type { LibraryEntry } from "../api/types";
-import { Badge, Button, Card, EmptyState, Input, Spinner } from "./ui";
+import { Badge, Button, Card, EmptyState, Field, Input, NumberInput, Select, Spinner } from "./ui";
 import { formatPct, friendlyResult } from "../lib/format";
 
 export function LibraryView() {
-  const { board, refreshLibrary, toast, setTab, libraryLoading, openGameInReview } = useApp();
+  const { board, refreshLibrary, toast, setTab, libraryLoading, openGameInReview, settings } = useApp();
   const [games, setGames] = useState<LibraryEntry[]>([]);
   const [collections, setCollections] = useState<string[]>([]);
   const [query, setQuery] = useState("");
@@ -16,6 +16,10 @@ export function LibraryView() {
   const [importing, setImporting] = useState(false);
   const [tagInput, setTagInput] = useState<Record<string, string>>({});
   const [colInput, setColInput] = useState<Record<string, string>>({});
+  const [onlineSite, setOnlineSite] = useState<"lichess" | "chess.com">("lichess");
+  const [onlineUser, setOnlineUser] = useState("");
+  const [onlineCount, setOnlineCount] = useState(5);
+  const [onlineImporting, setOnlineImporting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async (q?: string, col?: string) => {
@@ -67,6 +71,31 @@ export function LibraryView() {
     },
     [importText],
   );
+
+  const importOnline = useCallback(async () => {
+    const username = onlineUser.trim();
+    if (!username) return;
+    setOnlineImporting(true);
+    try {
+      const res = await api.importOnline(onlineSite, username, onlineCount);
+      const dup = res.games.filter((g) => g.duplicate).length;
+      const variantNote = res.skipped_variants ? `, skipped ${res.skipped_variants} variant game(s)` : "";
+      toast(
+        `Imported ${res.imported} game${res.imported === 1 ? "" : "s"} from ${res.source}` +
+          `${dup ? ` (${dup} duplicate${dup === 1 ? "" : "s"})` : ""}${variantNote}`,
+        "success",
+      );
+      if (res.errors.length) toast(`${res.errors.length} game(s) skipped`, "error");
+      await load(query || undefined, collection || undefined);
+      await refreshLibrary();
+      const newest = res.games.find((g) => !g.duplicate) ?? res.games[0];
+      if (newest) openGameInReview(newest.id, { autoStart: true });
+    } catch (e) {
+      toast((e as Error).message, "error");
+    } finally {
+      setOnlineImporting(false);
+    }
+  }, [onlineUser, onlineSite, onlineCount, load, query, collection, refreshLibrary, openGameInReview, toast]);
 
   const del = useCallback(
     async (g: LibraryEntry) => {
@@ -194,6 +223,60 @@ export function LibraryView() {
             Import
           </Button>
         </div>
+      </Card>
+
+      <Card title="Import recent games by username">
+        {settings?.online_import?.enabled ? (
+          <div className="flex flex-wrap items-end gap-2">
+            <Field label="Site">
+              <Select
+                className="w-36"
+                value={onlineSite}
+                onChange={(e) => setOnlineSite(e.target.value as "lichess" | "chess.com")}
+              >
+                <option value="lichess">Lichess</option>
+                <option value="chess.com">Chess.com</option>
+              </Select>
+            </Field>
+            <Field label="Username">
+              <Input
+                className="min-w-48"
+                value={onlineUser}
+                onChange={(e) => setOnlineUser(e.target.value)}
+                placeholder="e.g. DrNykterstein"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void importOnline();
+                }}
+              />
+            </Field>
+            <Field label="Games">
+              <NumberInput
+                className="w-20"
+                min={1}
+                max={20}
+                value={onlineCount}
+                onChange={(e) => setOnlineCount(Math.max(1, Math.min(20, Number(e.target.value) || 1)))}
+              />
+            </Field>
+            <Button small onClick={() => void importOnline()} disabled={!onlineUser.trim() || onlineImporting}>
+              {onlineImporting ? <Spinner className="h-3 w-3" /> : "Import & analyze"}
+            </Button>
+            <p className="w-full text-[11px] text-stone-500">
+              Fetches the most recent public games from {onlineSite} and opens the newest one to review. This is the
+              only ChessLab feature that uses the internet, and it only runs when you click the button.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-stone-400">
+            <span>
+              Import your last games from chess.com or lichess by username, then jump straight into analysis. This is
+              off by default because it uses the internet.
+            </span>
+            <Button small variant="outline" onClick={() => setTab("settings")}>
+              Enable in Settings
+            </Button>
+          </div>
+        )}
       </Card>
 
       <Card

@@ -24,7 +24,7 @@ export function EvalBar({
 
   return (
     <div className="flex flex-col items-center gap-1" style={{ height }}>
-      <div className="relative w-3.5 overflow-hidden rounded border border-stone-700 bg-stone-950" style={{ height: "100%" }}>
+      <div className="relative w-3.5 overflow-hidden rounded border border-stone-700 bg-stone-950" style={{ flex: 1, minHeight: 0 }}>
         <div className="absolute inset-x-0 top-0 bg-stone-900" style={{ height: `${100 - whitePct}%` }} />
         <div className="absolute inset-x-0 bottom-0 bg-stone-100" style={{ height: `${whitePct}%` }} />
         <div className="absolute inset-x-0 top-1/2 h-px bg-red-500/70" />

@@ -20,6 +20,7 @@ const SETTINGS = {
   classification: { excellent_loss: 20, good_loss: 50, inaccuracy_loss: 90, mistake_loss: 150, blunder_loss: 250 },
   accuracy: { model: "winprob-loss", cp_scale: 0.00368208, full_accuracy_bonus: 0 },
   board: { flip: false, theme: "classic", show_coordinates: true, show_legal_moves: true, sound: false, arrow_best_move: true },
+  online_import: { enabled: false, timeout_s: 15 },
 };
 
 beforeEach(() => {

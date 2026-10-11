@@ -141,6 +141,21 @@ export const api = {
     return post("/library/import", { pgn, source_name: sourceName ?? "pasted.pgn" });
   },
 
+  importOnline(
+    source: "lichess" | "chess.com",
+    username: string,
+    count = 5,
+  ): Promise<{
+    imported: number;
+    games: { id: string; duplicate?: boolean; white?: string; black?: string; date?: string; result?: string }[];
+    source: string;
+    username: string;
+    skipped_variants: number;
+    errors: { index: number; error: string }[];
+  }> {
+    return post("/library/import/online", { source, username, count });
+  },
+
   libraryTag(id: string, tag: string): Promise<LibraryEntry> {
     return post(`/library/${id}/tags`, { tag });
   },

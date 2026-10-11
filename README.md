@@ -1,15 +1,16 @@
 # ChessLab
 
-A fully **local, offline chess analysis workbench**. Play, analyze, and get a
-game review with the real Stockfish engine — no accounts, no cloud, no
-telemetry, no fabricated numbers.
+A **local chess analysis workbench** that runs fully offline by default. Play,
+analyze, and get a game review with the real Stockfish engine — no accounts,
+no telemetry, no fabricated numbers. The only optional network feature is a
+disabled-by-default game importer for chess.com / lichess usernames.
 
 | Component | Stack |
 |---|---|
 | Frontend | React 19 + TypeScript + Vite + Tailwind 4, `chess.js`, `react-chessboard`, Recharts |
 | Backend | Python 3 + Flask, `python-chess` |
 | Engine | Stockfish 19 via UCI at `/usr/bin/stockfish` (any Stockfish 16+ binary works) |
-| Storage | Local JSON + PGN files under `data/` (no database, no network) |
+| Storage | Local JSON + PGN files under `data/` (no database; network only for the optional importer) |
 
 ---
 
@@ -32,6 +33,12 @@ telemetry, no fabricated numbers.
   de-duplication, per-game review status, delete. Original PGNs are **never
   silently overwritten**: imports are hashed and stored as new files; exports
   are generated artifacts.
+- **Online import (optional)** — import a player's most recent games from
+  chess.com or lichess by username, then jump straight into the review of the
+  newest game. Off by default (Settings → "Online import"); it is the only
+  code path that uses the internet, only fetches public games, and never
+  uploads anything. Non-standard variants (e.g. Chess960, Bughouse) are
+  skipped because the engine review supports standard chess.
 - **Openings** — live opening-name detection from the move list plus a searchable
   explorer over a bundled dataset (names + ECO only). Optionally extend with
   `data/openings.json`. Win rates/popularity are **not** shown because no
@@ -137,6 +144,7 @@ data/
   `GET /jobs/<id>/events` (SSE) · `GET /jobs`
 - `POST /pgn/parse`, `POST /pgn/export`
 - `GET/POST/DELETE /library…` (list, get, delete, import, tags, collections)
+- `POST /library/import/online` (opt-in; chess.com / lichess by username)
 - `GET /library/<id>/review` · `GET /library/<id>/report/<html|pgn|csv|json>`
 - `GET /settings`, `PUT /settings`
 - `POST /openings/lookup`, `POST /openings/list`
@@ -145,12 +153,13 @@ data/
 ## Testing
 
 ```bash
-# Backend: 50 tests — unit tests use a deterministic fake UCI engine;
+# Backend: 63 tests — unit tests use a deterministic fake UCI engine;
 #          the integration suite verifies a real Stockfish 19 end-to-end.
 ./backend/.venv/bin/python -m pytest backend/tests -q
 
-# Frontend: 28 tests (Vitest + Testing Library) — format helpers, board state,
-#           move table, and full-App smoke rendering against a mocked API.
+# Frontend: 29 tests (Vitest + Testing Library) — format helpers, board state,
+#           move table, online-import flow, and full-App smoke rendering
+#           against a mocked API.
 cd frontend && npm test
 ```
 
@@ -171,6 +180,12 @@ cd frontend && npm test
   Hash=64 MB) because some target machines run with very little free RAM.
 - **Sounds** — move sounds use the Web Audio API (Chrome/Edge/Firefox;
   Safari has a user-gesture quirk).
+- **Online import dependencies** — the importer needs internet and the site
+  APIs (lichess.org, api.chess.com) to be reachable: username not found,
+  rate-limits, or outages surface as clear error messages, and the rest of the
+  app keeps working offline. Imported games are the ones the sites return
+  (most recent public games); ChessLab forwards them as-is minus non-standard
+  variants.
 
 ## Repository layout
 
