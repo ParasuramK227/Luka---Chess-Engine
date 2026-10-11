@@ -1,0 +1,12 @@
+# ChessLab backend dependencies
+
+# Python chess library by Niklas Fiekas (import name: `chess`).
+# Pinned to the pure-Python release so no native build is required and the
+# stable `chess.engine` UCI API is available.
+chess==1.10.0
+
+Flask>=3.0
+Flask-Cors>=4.0
+
+# Testing
+pytest>=8.0
