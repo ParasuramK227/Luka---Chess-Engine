@@ -1,0 +1,34 @@
+ply,move_number,mover,san,category,cp_loss,delta_wp,accuracy,eval_before,eval_after,best_move,reason
+1,1,white,e4,book,0,0.0,100.0,+0.32,+0.41,e4,Move is part of the bundled opening dataset.
+2,1,black,e5,book,0,0.0,100.0,+0.41,+0.39,e5,Move is part of the bundled opening dataset.
+3,2,white,Nf3,book,0,0.0,100.0,+0.39,+0.40,Nf3,Move is part of the bundled opening dataset.
+4,2,black,d6,book,0,0.0,100.0,+0.40,+0.38,Nc6,Move is part of the bundled opening dataset.
+5,3,white,d4,book,2,0.001833,99.725,+0.38,+0.36,Nc3,Move is part of the bundled opening dataset.
+6,3,black,Bg4,inaccuracy,90,0.080859,88.12,+0.36,+1.26,exd4,"Centipawn loss 90 falls in the 'inaccuracy' band (thresholds: excellent<=20, good<=50, inaccuracy<=100, mistake<=250)."
+7,4,white,dxe5,best,22,0.019368,97.109,+1.26,+1.04,dxe5,Matches the engine's top choice.
+8,4,black,Bxf3,good,37,0.032373,95.184,+1.04,+1.41,Nc6,"Centipawn loss 37 falls in the 'good' band (thresholds: excellent<=20, good<=50, inaccuracy<=100, mistake<=250)."
+9,5,white,Qxf3,best,0,0.0,100.0,+1.41,+1.80,Qxf3,Matches the engine's top choice.
+10,5,black,dxe5,excellent,8,0.00658,99.015,+1.80,+1.88,Nd7,"Centipawn loss 8 falls in the 'excellent' band (thresholds: excellent<=20, good<=50, inaccuracy<=100, mistake<=250)."
+11,6,white,Bc4,good,42,0.035213,94.765,+1.88,+1.46,Qb3,"Centipawn loss 42 falls in the 'good' band (thresholds: excellent<=20, good<=50, inaccuracy<=100, mistake<=250)."
+12,6,black,Nf6,mistake,102,0.082395,87.899,+1.46,+2.48,Qf6,"Centipawn loss 102 falls in the 'mistake' band (thresholds: excellent<=20, good<=50, inaccuracy<=100, mistake<=250)."
+13,7,white,Qb3,best,0,0.0,100.0,+2.48,+2.68,Qb3,Matches the engine's top choice.
+14,7,black,Qe7,inaccuracy,67,0.045975,93.184,+2.68,+3.35,Bc5,"Centipawn loss 67 falls in the 'inaccuracy' band (thresholds: excellent<=20, good<=50, inaccuracy<=100, mistake<=250)."
+15,8,white,Nc3,mistake,199,0.151791,78.119,+3.35,+1.36,Qxb7,"Centipawn loss 199 falls in the 'mistake' band (thresholds: excellent<=20, good<=50, inaccuracy<=100, mistake<=250)."
+16,8,black,c6,best,79,0.065546,90.331,+1.36,+2.15,c6,Matches the engine's top choice.
+17,9,white,Bg5,good,21,0.016829,97.486,+2.15,+1.94,Be3,"Centipawn loss 21 falls in the 'good' band (thresholds: excellent<=20, good<=50, inaccuracy<=100, mistake<=250)."
+18,9,black,b5,mistake,113,0.084557,87.589,+1.94,+3.07,a6,"Centipawn loss 113 falls in the 'mistake' band (thresholds: excellent<=20, good<=50, inaccuracy<=100, mistake<=250)."
+19,10,white,Nxb5,best,0,0.0,100.0,+3.07,+3.09,Nxb5,Matches the engine's top choice.
+20,10,black,cxb5,best,59,0.037678,94.402,+3.09,+3.68,cxb5,Matches the engine's top choice.
+21,11,white,Bxb5+,best,19,0.011639,98.259,+3.68,+3.49,Bxb5+,Matches the engine's top choice.
+22,11,black,Nbd7,best,43,0.025669,96.174,+3.49,+3.92,Nbd7,Matches the engine's top choice.
+23,12,white,O-O-O,best,0,0.0,100.0,+3.92,+6.24,O-O-O,Matches the engine's top choice.
+24,12,black,Rd8,best,0,0.0,100.0,+6.24,+6.24,Rd8,Matches the engine's top choice.
+25,13,white,Rxd7,great,4,0.00123,99.816,+6.24,+6.20,Rxd7,Best move and effectively the only move that holds the advantage (next-best is 177 cp worse).
+26,13,black,Rxd7,best,53,0.015138,97.738,+6.20,+6.73,Rxd7,Matches the engine's top choice.
+27,14,white,Rd1,great,27,0.007405,98.891,+6.73,+6.46,Rd1,Best move and effectively the only move that holds the advantage (next-best is 436 cp worse).
+28,14,black,Qe6,mistake,143,0.032918,95.103,+6.46,+7.89,g6,"Centipawn loss 143 falls in the 'mistake' band (thresholds: excellent<=20, good<=50, inaccuracy<=100, mistake<=250)."
+29,15,white,Bxd7+,blunder,536,0.230708,67.474,+7.89,+2.53,Bxf6,"Centipawn loss 536 falls in the 'blunder' band (thresholds: excellent<=20, good<=50, inaccuracy<=100, mistake<=250)."
+30,15,black,Nxd7,great,9745,0.282607,60.763,+2.53,M2,Nxd7,Best move and effectively the only move that holds the advantage (next-best is 616 cp worse).
+31,16,white,Qb8+,brilliant,0,0.0,100.0,M2,M1,Qb8+,Best move that sacrifices material (900 cp) yet keeps the position sound. Heuristic sacrifice detection.
+32,16,black,Nxb8,forced,0,0.0,100.0,M1,M1,Nxb8,Only one legal move in the position.
+33,17,white,Rd8#,great,0,0.0,100.0,M1,M0,Rd8#,Best move and effectively the only move that holds the advantage (next-best is 10745 cp worse).

@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+backend/.venv/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/.vite/
+*.local
+
+# Runtime data (library, games, reports, eval cache) — never commit
+data/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+*.log
